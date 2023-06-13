@@ -24,7 +24,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
-
+#include <iomanip>
 
 #include <iostream>
 #include <cmath>
@@ -35,20 +35,36 @@
 #include <vector>
 
 using namespace std;
+using slice = std::slice;
 typedef std::valarray<double> Vector;
 //typedef std::valarray<valarray<double>> Matrix;
 typedef std::vector<Vector> Matrix;
+
+void IdentityMatrix(Vector& Q, int n) { // Q must be initialized to zeros...
+    Q.resize(n * n);
+    for (int i = 0; i < n; i++)
+        Q[i * n + i] = 1.0;
+}
 
 void printMatrix(const Matrix& mat, int n) {
     
     for (const Vector& row : mat) {
         for (double element : row) {
-            std::cout << element << " ";
+            std::cout << element << "\t";
         }
         std::cout << std::endl;
     }
 }
-
+void printMatrix(const Vector& mat, int n) {
+    std::cout << "\n";
+    // Print the matrix in a table-like format
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            std::cout << std::setw(8) << std::setprecision(4) << std::fixed << mat[i * n + j] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
 Matrix multiplyMatrix(const Matrix& A, const Matrix& B) {
     Matrix result = Matrix(A[0].size(), Vector(B[1].size(), 0.0));
     int n = A.size();
@@ -87,9 +103,9 @@ void houseHolder(Vector* x, Vector* v, double* c) {
 
     *c = 2.0 / VdotProduct(*v);
 }
-void updateR(Vector v, double c, Matrix& R, int n, int starting_index) {
+void updateR(Vector v, double c, Vector& R, int n, int starting_index) {
     if (starting_index == n - 1) {
-        R[starting_index][starting_index] -= c * (v[0] * v[0] * R[starting_index][starting_index]);
+        R[starting_index*n + starting_index] -= c * (v[0] * v[0] * R[starting_index*n + starting_index]);
         return;
     }
 
@@ -97,20 +113,20 @@ void updateR(Vector v, double c, Matrix& R, int n, int starting_index) {
     Matrix dd2 = Matrix(2, Vector(n- starting_index, 0.0));
     for (int i = starting_index, x=0; i < starting_index + 2; i++, x++) {
         for (int j = starting_index, y=0; j < n ; j++, y++) {
-            dd2[x][y] = R[i][j];
+            dd2[x][y] = R[i*n + j];
         }
     }
 
     for (int i = 0; i < n - starting_index; i++) {
-        R[starting_index][starting_index + i] -= c * (v[0] * v[0] * dd2[0][i] + v[0] * v[1] * dd2[1][i]);
-        R[starting_index + 1][starting_index + i] -= c * ((v[0] * v[1]) * dd2[0][i] + (v[1] * v[1] * dd2[1][i]));
+        R[starting_index*n + starting_index + i] -= c * (v[0] * v[0] * dd2[0][i] + v[0] * v[1] * dd2[1][i]);
+        R[(starting_index + 1)*n + starting_index + i] -= c * ((v[0] * v[1]) * dd2[0][i] + (v[1] * v[1] * dd2[1][i]));
     }
 }
 
-void updateQ(Vector v, double c, Matrix& Q, int n, int starting_col) {
+void updateQ(Vector v, double c, Vector& Q, int n, int starting_col) {
     if (v.size() == 1) {
         for (int i = 0; i < n; i++) { // iterate rows
-            Q[i][starting_col] = Q[i][starting_col] - c * Q[i][starting_col] * v[0] * v[0];
+            Q[i*n + starting_col] = Q[i*n + starting_col] - c * Q[i*n + starting_col] * v[0] * v[0];
         }
         return;
     }
@@ -119,76 +135,59 @@ void updateQ(Vector v, double c, Matrix& Q, int n, int starting_col) {
     Matrix dd2 = Matrix(n, Vector(2, 0.0));
     for (int i = 0; i < n; i++) {
         for (int j = 0; j <2;j++) {
-            dd2[i][j] = Q[i][starting_col + j];
+            dd2[i][j] = Q[i*n + starting_col + j];
         }
     }
     for (int i = 0; i < n; i++) {
-        Q[i][starting_col] -= c * (dd2[i][0] * v[0] * v[0] + dd2[i][1] * (v[0] * v[1]));
-        Q[i][starting_col + 1] -= c * (dd2[i][0] * v[0] * v[1] + dd2[i][1] * (v[1] * v[1]));
+        Q[i*n + starting_col] -= c * (dd2[i][0] * v[0] * v[0] + dd2[i][1] * (v[0] * v[1]));
+        Q[i*n + starting_col + 1] -= c * (dd2[i][0] * v[0] * v[1] + dd2[i][1] * (v[1] * v[1]));
     }
 }
-void computeQR(const Matrix& A, Matrix& Q, Matrix& R) {
-    int n = A.size();
-    Q = Matrix(n, Vector(n, 0.0));
-    R = Matrix(n, Vector(n, 0.0));
+tuple<Vector, Vector> computeQR(const Vector& A, int n) {
+    int nn = n * n;
+    Vector Q = Vector(nn);
+    Vector R = Vector(nn);
     Vector v;
     double c;
 
-    // Q = identity matrix
-    for (int i = 0; i < n; i++) {
-        Q[i][i] = 1;
-    }
-
-    // R = copy of A
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; ++j) {
-            R[i][j] = A[i][j];
-        }
-    }
+    IdentityMatrix(Q, n);
+    R = A;
 
     // compute QR factorization
-    for (int j = 0; j < n; ++j) {
+    for (int j = 0; j < n; j++) {
         Vector x = Vector(n-j, 1.0);
         for (int i = j, k = 0; i < n; i++, k++)
-            x[k] = R[i][j];
+            x[k] = R[i*n + j];
         houseHolder(&x, &v, &c); // comoute Householder reflector vector
         updateR(v, c, R, n, j);  // Apply Householder transformation to eliminate entries below the diagonal in the jth column
         updateQ(v, c, Q, n, j);
     }
+
+    return { Q, R };
 }
 
-void multiplyScalarWithMatrix(double scalar, Matrix& matrix) {
-    int rows = matrix.size();
-    int cols = matrix[0].size();
-
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            matrix[i][j] *= scalar;
-        }
-    }
-}
-void getDiagonalAbsMin(Matrix& A, double *min, int *pos) {
+void getDiagonalAbsMin(Vector& A, double *min, int *pos) {
     int n = A.size();
-    *min = std::abs(A[0][0]);
+    *min = std::abs(A[0]);
     for (int i = 0; i < n ; i++) {
-        if (std::abs(A[i][i]) < *min) {
-            *min = A[i][i];
+        if (std::abs(A[i*n + i]) < *min) {
+            *min = A[i*n + i];
             *pos = i;
         }
     }
 }
-void copyMatrix(const Matrix& source, Matrix& destination) {
-    int rows = source.size();
-    int cols = source[0].size();
-
-    destination.resize(rows);
-    for (int i = 0; i < rows; ++i) {
-        destination[i].resize(cols);
-        for (int j = 0; j < cols; ++j) {
-            destination[i][j] = source[i][j];
-        }
-    }
-}
+//void copyMatrix(const Vector &source, Vector& destination, int columns, int rows) {
+//    //int rows = source.size();
+//    //int cols = source[0].size();
+//
+//    destination.resize(rows);
+//    for (int i = 0; i < rows; ++i) {
+//       // destination[i].resize(columns);
+//        for (int j = 0; j < columns; ++j) {
+//            destination[i* columns + j] = source[i* columns + j];
+//        }
+//    }
+//}
 
 Matrix concatenateArrays(const Matrix& arr1, const Matrix& arr2) {
     if (arr1.size() != arr2.size()) {
@@ -208,67 +207,107 @@ Matrix concatenateArrays(const Matrix& arr1, const Matrix& arr2) {
     return result;
 }
 
-tuple<Vector, Matrix> my_eigen_recursive(Matrix& A, double epsilon=1e-6) {
-    int n = A.size();
-    Matrix I = Matrix(n, Vector(n, 0.0));
-    Matrix Q = Matrix(n, Vector(n, 0.0));
-    Matrix R = Matrix(n, Vector(n, 0.0));
-    Matrix uI = Matrix(n, Vector(n, 0.0));
-    Matrix eigenvectors = Matrix(n, Vector(n, 0.0));
+
+// Function to perform matrix multiplication matrix1 @ matrix2
+Vector matrixMultiply(const Vector& matrix1, int rows1, int cols1,
+                                    const Vector& matrix2, int rows2, int cols2) {
+    try {
+        if (cols1 != rows2) {
+            throw std::invalid_argument("Matrix dimensions are not compatible for multiplication.");
+        }
+    } catch (std::invalid_argument) {
+        exit(1);
+    }
+    double sum = 0.0;
+    Vector result(rows1 * cols2);
+
+    for (int i = 0; i < rows1; i++) {
+        for (int j = 0; j < cols2; j++) {
+            sum = 0;
+            for (int k = 0; k < cols1; k++) {
+                sum += matrix1[i * cols1 + k] * matrix2[k * cols2 + j];
+            }
+            result[i * cols2 + j] = sum;
+        }
+    }
+
+    return result;
+}
+
+
+
+std::tuple<Vector, Vector> my_eigen_recursive(Vector& A, int n, double epsilon=1e-6) {
+    int nn = n * n;
+    Vector I = Vector(nn);
+    Vector Q = Vector(nn);
+    Vector R = Vector(nn);
+    Vector uI = Vector(nn);
+    Vector eigenvectors = Vector(nn);
     //Vector eigenvalues = Vector(n, 0.0);
     double u = 1.0; // for shift
     double min_diag_A = 100.0;
     int diag_arr_position=0;
 
     // Initialize matrices I & Q to be equal to the identity matrix 
-    for (int i = 0; i < n; i++) {
-        I[i][i] = 1.0;
-        Q[i][i] = 1.0;
-        eigenvectors[i][i] = 1.0;
-    }
+    IdentityMatrix(I, n);
+    Q = I;
+    eigenvectors = I;
 
     if (n == 1) {
-        Vector firstCol;
+        Vector firstCol = Vector(n);
         for (int i = 0; i < n; n++)
-            firstCol[i] = A[i][0];
-        return {firstCol,I}; // return A[:,0], I
+            firstCol[i] = A[i*n];
+        return std::make_tuple(firstCol,I); // return A[:,0], I
     }
 
 
     // QR iteration
     while (min_diag_A > epsilon) {
-        copyMatrix(I, uI);
-        multiplyScalarWithMatrix(u, uI);
-        computeQR(A, Q, R);
-        A = multiplyMatrix(R, Q);
-        u = A[n - 1][n - 1];
-        eigenvectors = multiplyMatrix(eigenvectors, Q);
+        uI = u * I; 
+        auto [Q, R] = computeQR(A - uI, n);
+        A = matrixMultiply(R, n, n, Q, n, n);
+        u = A[(n - 1)*n + n - 1];
+        eigenvectors = matrixMultiply(eigenvectors, n, n, Q, n, n);
         getDiagonalAbsMin(A, &min_diag_A, &diag_arr_position);
         printf("\n\nA:\n");
-        printMatrix(A);
+        printMatrix(A, n);
     }
 
-    Matrix upper_mat(A.begin(), A.begin() + diag_arr_position + 1);
-    Matrix low_mat(A.begin() + diag_arr_position + 1, A.end());
-
-    auto [eigenvalues_upper, eigenvector_upper] = my_eigen_recursive(upper_mat, epsilon);
-    auto [eigenvalues_lower, eigenvector_lower] = my_eigen_recursive(low_mat, epsilon);
+    // Get the submatrix
+    slice upperMatSlice(0, diag_arr_position * n, 1);
+    Vector upper_mat = A[upperMatSlice];
+    slice lowerMatSlice(diag_arr_position*n, n* n, 1);
+    Vector low_mat = A[lowerMatSlice];
+     
+    auto [eigenvalues_upper, eigenvector_upper] = my_eigen_recursive(upper_mat, diag_arr_position, epsilon);
+    auto [eigenvalues_lower, eigenvector_lower] = my_eigen_recursive(low_mat, n-diag_arr_position, epsilon);
 
     Vector concatenated_eigenvalues(eigenvalues_upper.size() + eigenvalues_lower.size());
-    std::copy(std::begin(eigenvalues_upper), std::end(eigenvalues_upper), std::begin(concatenated_eigenvalues));
-    std::copy(std::begin(eigenvalues_lower), std::end(eigenvalues_lower), std::begin(concatenated_eigenvalues) + eigenvalues_lower.size());
+    concatenated_eigenvalues[slice(0, eigenvalues_upper.size(), 1)] = eigenvalues_lower;
+    concatenated_eigenvalues[slice(eigenvalues_lower.size(), eigenvalues_upper.size(), 1)] = eigenvalues_upper;
 
-    Matrix v1;
-    v1.reserve(eigenvector_upper.size() + eigenvector_lower.size());
-    v1.insert(v1.end(), eigenvector_upper.begin(), eigenvector_upper.end());
-    v1.resize(v1.size(), Vector(eigenvector_upper[0].size(), 0.0));
+    //Matrix v1;
+    //v1.reserve(eigenvector_upper.size() + eigenvector_lower.size());
+    //v1.insert(v1.end(), eigenvector_upper.begin(), eigenvector_upper.end());
+    //v1.resize(v1.size(), Vector(eigenvector_upper[0].size(), 0.0));
 
-    Matrix v2;
-    v2.reserve(eigenvector_upper.size() + eigenvector_lower.size());
-    v2.resize(eigenvector_upper.size(), Vector(eigenvector_lower[0].size(), 0.0));
-    v2.insert(v2.end(), eigenvector_lower.begin(), eigenvector_lower.end());
+    //Matrix v2;
+    //v2.reserve(eigenvector_upper.size() + eigenvector_lower.size());
+    //v2.resize(eigenvector_upper.size(), Vector(eigenvector_lower[0].size(), 0.0));
+    //v2.insert(v2.end(), eigenvector_lower.begin(), eigenvector_lower.end());
+    Vector v1(eigenvector_upper.size() + eigenvector_lower.size());
+    v1[slice(0, eigenvector_upper.size(), 1)] = eigenvector_upper;
+    v1[slice(eigenvector_upper.size(), eigenvector_lower.size(), 1)] = 0;
 
-    eigenvectors = multiplyMatrix(eigenvectors, concatenateArrays(v1, v2));
+    Vector v2(eigenvector_upper.size() + eigenvector_lower.size());
+    v2[slice(0, eigenvector_upper.size(), 1)] = 0;
+    v2[slice(eigenvector_upper.size(), eigenvector_lower.size(), 1)] = eigenvector_lower;
+
+    Vector concatv1v2(v1.size() + v2.size());
+    concatenated_eigenvalues[slice(0, v1.size(), 1)] = v2;
+    concatenated_eigenvalues[slice(v2.size(), v1.size(), 1)] = v1;
+
+    eigenvectors = matrixMultiply(eigenvectors, n, n, concatv1v2, n, n);
 
     return { concatenated_eigenvalues, eigenvectors};
 }
@@ -288,11 +327,7 @@ Vector outer(Vector vector) { // vector * vector.T
 
     return result;
 }
-void IdentityMatrix(Vector &Q, int n) { // Q must be initialized to zeros...
-    Q.resize(n * n);
-    for (int i = 0; i < n; i++)
-        Q[i*n + i] = 1.0;
-}
+
 
 Vector GetColumnVector(Matrix A, int start_row, int col) {
     Vector col_vec = Vector(A.size() - start_row, 0.0);
@@ -320,17 +355,29 @@ double GetVetNorm(Vector x) {
 
     return sqrt(norm);
 }
+
+std::gslice getSubmatrixSlice(size_t numRows, size_t numCols, size_t startCol, size_t startRow, size_t n) {
+    // Calculate the starting index
+    std::size_t startIndex = startRow * n + startCol;
+
+    // Create a gslice object to represent the submatrix
+    std::valarray<std::size_t> lengths{ numRows, numCols };
+    std::valarray<std::size_t> strides{ n, 1 };
+    std::gslice submatrixSlice(startIndex, lengths, strides);
+
+    return submatrixSlice;
+}
 // Computes the Hessenberg form of a symmetric matrix A using Householder reflections.
-tuple<Matrix, Vector> HessenbergForm(Matrix A, double epsilon) {
+tuple<Vector, Vector> HessenbergForm(Matrix A, double epsilon) {
     int n = A.size();
     int nn = n * n;
     Vector x, v;
     Vector vvT;
-    Vector H = Vector(A.size()* A.size());
+    Vector H = Vector(nn);
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
             H[i * n + j] = A[i][j];
-    Vector Q(nn, 0.0);
+    Vector Q(nn);
     IdentityMatrix(Q, n);
 
     for (int k = 0; k < n - 2; ++k) {
@@ -339,19 +386,24 @@ tuple<Matrix, Vector> HessenbergForm(Matrix A, double epsilon) {
         v[0] += (x[0] < 0 ? -1 : 1) * GetVetNorm(x);
         v = v / GetVetNorm(v);
         int vn = v.size();
-        vvT = outer(v);
+        vvT = matrixMultiply(v, v.size(), 1, v, 1, v.size());
 
-        for (int i = k + 1, x = 0; i < n-1; i++, x++) {
-            for (int j = k, y = 0; j < n-1; j++, y++) {
-                H[(i)*n + j] = H[(i)*n + j] - 2.0 * vvT[x * vn + y] * H[i * n + j];
-            }
-        }
-        for (int i = 0, x = 0; i < n-1; i++, x++) {
-            for (int j = k + 1, y = 0; j < n; j++, y++) {
-                H[i * n + j] -= 2.0 * H[i * n + j] * vvT[x * vn + y];
-                Q[i * n + j] -= 2.0 * Q[i * n + j] * vvT[x * vn + y];
-            }
-        }
+        // H[k+1:, k:] -= 2.0 * np.outer(v, v @ H[k+1:, k:])
+        std::gslice slice1 = getSubmatrixSlice(n - (k+1), n-k, k, k+1, n);
+        Vector submatrix1 = H[slice1];
+        H[slice1]-=2.0 *matrixMultiply(vvT, vn, vn, H[slice1], n - (k + 1), n - k);
+
+        // H[:, k + 1 : ] -= 2.0 * np.outer(H[:, k + 1 : ] @ v, v)
+        std::gslice slice2 = getSubmatrixSlice(n, n-(k+1), k+1, 0, n);
+        std::valarray<double> submatrix2 = H[slice2];
+        H[slice2] -= 2.0 * matrixMultiply(H[slice2], n, n - k - 1, vvT, vn, vn);
+
+        // std::gslice getSubmatrixSlice(size_t numRows, size_t numCols, size_t startCol, size_t startRow, size_t n) {
+
+        // Q[:, k+1:] -= 2.0 * np.outer(Q[:, k+1:] @ v, v)
+        //std::gslice slice3 = getSubmatrixSlice(n, n - (k + 1), k + 1, 0, n);
+        std::valarray<double> submatrix3 = Q[slice2];
+        Q[slice2] -= 2.0 * matrixMultiply(Q[slice2], n, n - k - 1, vvT, vn, vn);
     }
     // Create the mask for tridiagonal elements
     // Create the mask for tridiagonal elements
@@ -365,15 +417,15 @@ tuple<Matrix, Vector> HessenbergForm(Matrix A, double epsilon) {
     }
 
     // Assign zeros to the masked elements
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
             if (!mask[i][j] && std::abs(H[i * n + j]) < epsilon) {
                 H[i * n + j] = 0.0;
             }
         }
     }
-    Matrix Hessenberg = Matrix(H.size(), H);
-    return { Hessenberg, Q };
+    //Matrix Hessenberg = Matrix(H.size(), H);
+    return { H, Q };
 }
 int main() {
     // Example usage
@@ -385,9 +437,11 @@ int main() {
 
    // Vector eigenvalues;
  //   Matrix eigenvectors;
+    int n = 3;
     auto [HessenbergMat, H] = HessenbergForm(A, 1e-6);
-    printMatrix(HessenbergMat);
-    auto [eigenvalues, eigenvectors] = my_eigen_recursive(HessenbergMat, 1e-6);
+    printMatrix(A, n);
+    printMatrix(HessenbergMat, sqrt(HessenbergMat.size()));
+    auto [eigenvalues, eigenvectors] = my_eigen_recursive(HessenbergMat, n, 1e-6);
 
     std::cout << "Eigenvalues:" << std::endl;
     for (double eigenvalue : eigenvalues) {
@@ -395,7 +449,7 @@ int main() {
     }
 
     std::cout << "Eigenvectors:" << std::endl;
-    printMatrix(eigenvectors);
+    printMatrix(eigenvectors, sqrt(eigenvectors.size()));
 
     return 0;
 }
