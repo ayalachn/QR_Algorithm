@@ -2,48 +2,19 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <sstream>  // Add this line
-#include <iostream>
 #include <cmath>
-//#include <vector>
 #include <tuple>
-#include <sstream>  // Add this line
-#include <fstream>
-#include <chrono>
-#include <random>
-#include <iostream>
-#include <fstream>
-#include <streambuf>
+#include <sstream>  
 #include <chrono>
 #include <random>
 #include <immintrin.h>
 #include <thread>
-#include <string>
 #include <valarray>
-//#include <inner_product>
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <iomanip>
-
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <streambuf>
-#include <chrono>
-#include <random>
-#include <immintrin.h>
-#include <thread>
-#include <string>
-#include <iostream>
-#include <cmath>
-#include <vector>
 
 using namespace std;
 using slice = std::slice;
 typedef std::valarray<double> Vector;
+
 long double Get_Time() { // get time in seconds
     using chrono::high_resolution_clock;
     auto t = high_resolution_clock::now();
@@ -123,17 +94,11 @@ public:
         for (int i = 0; i < rows * cols; i++)
             p[i] = m.p[i];
     }
-    //Matrix(const Matrix& m) : p(new double[m.rows * m.cols]), rows(m.rows), cols(m.cols) {
-    //    std::copy(m.p, m.p + (rows * cols), p);
-    //}
-
+    
     Matrix(Matrix&& m) : rows(m.rows), cols(m.cols) {
         p = m.p;
         m.p = nullptr;
     }
-
-
-
 
     friend bool eq(Matrix& a, Matrix& b) { return a.rows == b.rows && a.cols == b.cols; }
     friend bool eq(Matrix&& a, Matrix&& b) { return a.rows == b.rows && a.cols == b.cols; }
@@ -167,15 +132,7 @@ public:
         m.p = nullptr;
         return *this;
     }
-    //Matrix getSubMatrix(int start_row, int start_col, int end_row, int end_col) {
-    //    Matrix subMatrix(end_row - start_row, end_col - start_col);
-
-    //    for (int i = start_row, x=0; i < end_row; i++, x++)
-    //        for (int j = start_col, y=0; j < end_col; j++, y++)
-    //            subMatrix.p[x * subMatrix.cols + y] = p[i * cols + j];
-    //    return subMatrix;
-    //}
-
+    
     Matrix getSubMatrix(int start_row, int start_col, int end_row, int end_col) {
         // Input validation
         if (start_row < 0 || start_row >= rows || start_col < 0 || start_col >= cols ||
@@ -209,12 +166,7 @@ public:
                 else p[i * cols + j] = 0;
             }
     }
-    // 
-    //void setSubMatrix(Matrix subMatrix, int start_row, int start_col) {
-    //    for (int i = start_row, x=0;  x < subMatrix.rows ; i++, x++)
-    //        for (int j = start_col, y=0; y < subMatrix.cols ; j++,y++)
-    //            p[i * cols + j] = subMatrix.p[x * subMatrix.cols + y];
-    //}
+    
     void setSubMatrix(const Matrix& submatrix, int start_row, int start_col) {
         const int submatrixrows = submatrix.rows;
         const int submatrixcols = submatrix.cols;
@@ -651,12 +603,6 @@ public:
 int Matrix::Tools::n_th = 8;
 int Matrix::Tools::dim_th = 1;
 
-//class UpperTriangularMatirx : public Matrix
-//{
-//public:
-//    UpperTriangularMatirx(int rows_, int cols_) : Matrix(rows_/2, cols_) {}
-//
-//};
 
 double VdotProduct(const Vector& v) {
     if (v.size() == 1)
@@ -672,7 +618,6 @@ void houseHolder(Vector* x, double* c) {
 }
 void updateR(const Vector v, const double c, Matrix& R, const size_t starting_index) {
     if (starting_index == R.rows - 1) {
-        //R.p[starting_index * n + starting_index] -= c * (v[0] * v[0] * R.p[starting_index * n + starting_index]);
         return;
     }
     double dd21, dd22;
@@ -701,20 +646,15 @@ void updateQ(const Vector v, const double c, Matrix& Q, const size_t starting_co
 void computeQR(Matrix &R, Matrix &Q) {
     double c;
     int n = R.rows;
-    //Matrix Q(n, n, "I");
-   // Matrix R(A);
 
     for (size_t  j = 0; j < n-1; ++j) {
-        //R.toString();
         Vector x(n - j);
         for (size_t  i = j, k = 0; i < n; ++i, ++k)
             x[k] = R.p[i * n + j];
-        houseHolder(&x, &c); // comoute Householder reflector vector
-       // Q.toString();
-        updateR(x, c, R, j);  // Apply Householder transformation to eliminate entries below the diagonal in the jth column
+        houseHolder(&x, &c); // compute Householder reflector vector
+        updateR(x, c, R, j);  // apply Householder transformation to eliminate entries below the diagonal in the jth column
         updateQ(x, c, Q, j);
     }
-    /*return { Q, R };*/
 }
 
 void getDiagonal1AbsMin(const Matrix& A, double* min, int* pos) {
@@ -737,139 +677,37 @@ void getDiagonal1AbsMin(const Matrix& A, double* min, int* pos) {
     }
 }
 
-/*
-
-std::tuple<Vector, Matrix> my_eigen_recursive(Matrix& A, const size_t  n, const double epsilon = 1e-6) {
-    // Initialize matrices I & Q to be equal to the identity matrix 
-    Matrix I(n, n, "I"); // identity matrix
-    Matrix Q(n, n); // identity matrix
-    Matrix eigenvectors(I);
-    //Matrix R(n, n);
-   // R.setIsTriangular(true);
-    double u = 0.0; // for shift
-    double min_diag_A = 100.0;
-    int diag_arr_position = 0;
-    int iterations=0;
-
-    if (n == 1) {
-        Vector a(1);
-        a[0] = A.p[0];
-        return std::make_tuple(a, I);
-    }
-
-    // QR iteration
-    while (abs(min_diag_A) > epsilon) {
-
-        // compute A-u*I
-        for (int i = 0; i < A.rows; i++)
-            A.p[i * A.cols + i] -= u;
-
-        // compute QR factorization
-        computeQR(Q, A, n);
-
-        // compute A = RQ
-        //A = R;
-        //A.setIsTriangular(true);
-        A *= Q;
-
-        // compute A+u*I
-        for (int i = 0; i < A.rows; i++)
-            A.p[i * A.cols + i] += u;
-
-        eigenvectors *= Q; 
-        u = A.p[(n - 1) * n + n - 1];
-        getDiagonal1AbsMin(A, &min_diag_A, &diag_arr_position);
-        ++iterations;
-    }
-    delete[]  Q.p;
-    //delete[] R.p;
-    Q.p = nullptr;
-  //  R.p = nullptr;
-
-    // get the submatrices for recursive call
-    Matrix upper_mat = A.getSubMatrix(0, 0, diag_arr_position+1, diag_arr_position+1);
-    Matrix low_mat = A.getSubMatrix(diag_arr_position+1, diag_arr_position+1, A.rows, A.cols);
-    delete[] A.p;
-    A.p = nullptr;
-    // recursive call to improve performance
-    auto [eigenvalues_upper, eigenvector_upper] = my_eigen_recursive(upper_mat, diag_arr_position + 1, epsilon);
-    delete[] upper_mat.p;
-    upper_mat.p = nullptr;
-    auto [eigenvalues_lower, eigenvector_lower] = my_eigen_recursive(low_mat, n - (diag_arr_position + 1), epsilon);
-
-    delete[] low_mat.p;
-    low_mat.p = nullptr;
-
-    // concat result eigenvalues
-    Vector concatenated_eigenvalues(eigenvalues_upper.size() + eigenvalues_lower.size());
-    concatenated_eigenvalues[slice(0, eigenvalues_upper.size(), 1)] = eigenvalues_upper;
-    concatenated_eigenvalues[slice(eigenvalues_upper.size(), eigenvalues_lower.size(), 1)] = eigenvalues_lower;
-
-    // concatinate v1 and v2 to a single matrix
-    Matrix concateV1V2(eigenvector_upper.rows + eigenvector_lower.rows, eigenvector_upper.cols + eigenvector_lower.cols, 0.0);
-    concateV1V2.setSubMatrix(eigenvector_upper, 0, 0);
-    concateV1V2.setSubMatrix(eigenvector_lower, eigenvector_upper.rows, eigenvector_upper.cols);
-   // concateV1V2.toString();
-    // compute eigenvectors
-    eigenvectors *= concateV1V2;
-   // eigenvectors.toString();
-    return std::make_tuple(concatenated_eigenvalues, eigenvectors);
-}
-*/
 std::tuple<Vector, Matrix> my_eigen_recursive(Matrix& A, const double epsilon = 1e-6) {
-    // Initialize matrices I & Q to be equal to the identity matrix 
     int n = A.rows;
-    Matrix I(n, n, "I"); // identity matrix
-    Matrix Q(n, n); // identity matrix
+    Matrix Q(n, n); 
     Matrix eigenvectors(n, n, "I");
     double u = 0.0; // for shift
     double min_diag_A = 100.0;
     int diag_arr_position = 0;
-    int iterations = 0;
 
     if (n == 1) {
         Vector a(1);
         a[0] = A.p[0];
-        return std::make_tuple(a, I);
+        return std::make_tuple(a, Matrix(n,n,"I"));
     }
 
     // QR iteration   
     while (abs(min_diag_A) > epsilon) {
-        // compute A-u*I
 
+        // compute QR factorization for A-uI
         A.add2Diag(-u);
-        // compute QR factorization
-       // cout << "\nA:" << endl;
-        //A.toString();
         Q.setIdentity();
         computeQR(A, Q);
 
-        // compute A = RQ
-        //A = R;
-        //A.setIsTriangular(true);
-       // delete[] A.p;
-        //A.p = nullptr;
+        // compute A = RQ + uI
         A.multiplyToTheRight(Q);
-        //A = A*Q;
-       // cout << "\nR:" << endl;
-        //cout << "\nQ:" << endl;
-        //Q.toString();
-
-        // compute A+u*I
         A.add2Diag(u);
-         //cout << "\nA after:" << endl;
-         //A.toString();
-        eigenvectors.multiplyToTheRight(Q);
-        //eigenvectors = eigenvectors * Q;
-       // cout << "\neigenvectors:" << endl;
-       // eigenvectors.toString();
-        u = A.p[(n - 1) * A.cols + n - 1];
-        // A.toString();
-        getDiagonal1AbsMin(A, &min_diag_A, &diag_arr_position);
 
-        ++iterations;
-        if (iterations > 1000)
-            break;
+        eigenvectors.multiplyToTheRight(Q);
+
+        u = A.p[(n - 1) * A.cols + n - 1]; // next shift
+
+        getDiagonal1AbsMin(A, &min_diag_A, &diag_arr_position);
     }
 
     // get the submatrices for recursive call
@@ -877,6 +715,7 @@ std::tuple<Vector, Matrix> my_eigen_recursive(Matrix& A, const double epsilon = 
     Matrix low_mat = A.getSubMatrix(diag_arr_position + 1, diag_arr_position + 1, A.rows, A.cols);
     delete[] A.p;
     A.p = nullptr;
+
     // recursive call to improve performance
     auto [eigenvalues_upper, eigenvector_upper] = my_eigen_recursive(upper_mat,  epsilon);
     delete[] upper_mat.p;
@@ -895,10 +734,9 @@ std::tuple<Vector, Matrix> my_eigen_recursive(Matrix& A, const double epsilon = 
     Matrix concateV1V2(eigenvector_upper.rows + eigenvector_lower.rows, eigenvector_upper.cols + eigenvector_lower.cols, 0.0);
     concateV1V2.setSubMatrix(eigenvector_upper, 0, 0);
     concateV1V2.setSubMatrix(eigenvector_lower, eigenvector_upper.rows, eigenvector_upper.cols);
-    // concateV1V2.toString();
-     // compute eigenvectors
+    
+    // compute eigenvectors
     eigenvectors.multiplyToTheRight(concateV1V2);
-    // eigenvectors.toString();
     return std::make_tuple(concatenated_eigenvalues, eigenvectors);
 }
 std::tuple<Vector, Matrix> my_eigen(Matrix& A, const double epsilon = 1e-6) {
