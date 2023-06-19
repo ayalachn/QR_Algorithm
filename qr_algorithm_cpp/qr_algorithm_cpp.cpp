@@ -739,75 +739,7 @@ std::tuple<Vector, Matrix> my_eigen_recursive(Matrix& A, const double epsilon = 
     eigenvectors.multiplyToTheRight(concateV1V2);
     return std::make_tuple(concatenated_eigenvalues, eigenvectors);
 }
-std::tuple<Vector, Matrix> my_eigen(Matrix& A, const double epsilon = 1e-6) {
-    // Initialize matrices I & Q to be equal to the identity matrix 
-    int n = A.rows;
-    Matrix I(n, n, "I"); // identity matrix
-    Matrix Q(n, n); // identity matrix
-    Matrix eigenvectors(n,n, "I");
-    //Matrix R(n, n);
-   // R.setIsTriangular(true);
-    double u = 0.0; // for shift
-    double max_diag_A = 100.0;
-    int diag_arr_position = 0;
-   int iterations = 0;
 
-    if (n == 1) {
-        Vector a(1);
-        a[0] = A.p[0];
-        return std::make_tuple(a, I);
-    }
-
-    // QR iteration
-    while (abs(max_diag_A) > epsilon) {
-
-        // compute A-u*I
-        
-        A.add2Diag(-u);
-        // compute QR factorization
-       // cout << "\nA:" << endl;
-        //A.toString();
-        Q.setIdentity();
-        computeQR(A, Q);
-
-        // compute A = RQ
-        //A = R;
-        //A.setIsTriangular(true);
-       // delete[] A.p;
-        //A.p = nullptr;
-        A.multiplyToTheRight(Q);
-        //A = A*Q;
-       // cout << "\nR:" << endl;
-       // cout << "\nQ:" << endl;
-        //Q.toString();
-
-        // compute A+u*I
-        A.add2Diag(u);
-       // cout << "\nA after:" << endl;
-       // A.toString
-        eigenvectors.multiplyToTheRight(Q);
-        //eigenvectors = eigenvectors * Q;
-       // cout << "\neigenvectors:" << endl;
-       // eigenvectors.toString();
-        u = A.p[(n - 1) * A.cols + n - 1];
-       // A.toString();
-        getDiagonal1AbsMax(A, &max_diag_A, &diag_arr_position);
-
-        ++iterations;
-       // if (iterations == 1000)
-          //  break;
-    }
-    //delete[]  Q.p;
-    ////delete[] R.p;
-    //Q.p = nullptr;
-    //  R.p = nullptr;
-
-    Vector eigenvalues(A.rows);
-    for (int i = 0; i < A.rows; ++i)
-        eigenvalues[i] = A.p[i * A.cols + i];
-
-    return std::make_tuple(eigenvalues, eigenvectors);
-}
 Matrix GetColumnVector(const Matrix A,  const int start_row, const int col) {
     Matrix v(A.rows - start_row, 1);
     int n = A.cols;
@@ -903,13 +835,10 @@ int main() {
     printf("\nComputing eigenvalues & eigenvectors using QR method...\n");
     tt = Get_Time();
     auto [eigenvalues, eigenvectors] = my_eigen_recursive(HessenbergMat, 1e-3);
-    //auto [Q, R] = computeQR(a, a.rows);
     eigenvectors = H * eigenvectors;
     duration = Get_Time();
     duration -= tt;
     cout << "\nmy_eigen: " << duration << endl;
-    //printf("\nmy_eigen_recursive: %lf\n", duration);
-   // 
    // std::cout << "\nEigenvalues:" << std::endl;
    // for (double eigenvalue : eigenvalues) {
    //     std::cout << eigenvalue << std::endl;
