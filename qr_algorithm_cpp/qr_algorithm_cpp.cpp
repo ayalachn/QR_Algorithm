@@ -10,7 +10,10 @@
 #include <immintrin.h>
 #include <thread>
 #include <valarray>
-
+#include <streambuf>
+#include <iomanip>
+//#include <Eigen/Core>
+#include <Eigen/Eigenvalues>
 using namespace std;
 using slice = std::slice;
 typedef std::valarray<double> Vector;
@@ -823,22 +826,39 @@ tuple<Matrix, Matrix> HessenbergForm(Matrix H, const double epsilon) {
 
 int main() {
     Matrix A("inv_matrix(800 x 800).txt");
+    Matrix B(A);
+    long double tt, duration;
     //int sub_n = 400;
 
     //Matrix a = A.getSubMatrix(0, 0, sub_n, sub_n);
-
+    
     printf("\nConverting matrix to Hessenberg form...\n");
     auto [HessenbergMat, H] = HessenbergForm(A, 1e-6);
     delete[] A.p;
     A.p = nullptr;
-    long double tt, duration;
     printf("\nComputing eigenvalues & eigenvectors using QR method...\n");
     tt = Get_Time();
     auto [eigenvalues, eigenvectors] = my_eigen_recursive(HessenbergMat, 1e-3);
     eigenvectors = H * eigenvectors;
     duration = Get_Time();
     duration -= tt;
-    cout << "\nmy_eigen: " << duration << endl;
+    cout << "\nmy_eigen: " << duration << " second" << endl;
+    
+    // compute eigenvalues and eigenvectors using Eigen
+    Eigen::MatrixXd eigenMatrix(B.rows, B.cols);
+    for (int i = 0; i < B.rows; ++i)
+        for (int j = 0; j < B.cols ; ++j)
+            eigenMatrix(i, j) = B.p[i*A.cols + j];
+
+    tt = Get_Time();
+    Eigen::EigenSolver<Eigen::MatrixXd> solver(eigenMatrix);
+    //Eigen::VectorXcd eigenvalues = solver.eigenvalues();
+    //Eigen::MatrixXcd eigenvectors = solver.eigenvectors();
+    duration = Get_Time() - tt;
+    cout << "\nEigen: " << duration << " second" << endl;
+
+    //printf("\nmy_eigen_recursive: %lf\n", duration);
+   // 
    // std::cout << "\nEigenvalues:" << std::endl;
    // for (double eigenvalue : eigenvalues) {
    //     std::cout << eigenvalue << std::endl;
