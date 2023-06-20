@@ -13,7 +13,7 @@
 #include <streambuf>
 #include <iomanip>
 //#include <Eigen/Core>
-#include <Eigen/Eigenvalues>
+//#include <Eigen/Eigenvalues>
 using namespace std;
 using slice = std::slice;
 typedef std::valarray<double> Vector;
@@ -845,17 +845,17 @@ int main() {
     cout << "\nmy_eigen: " << duration << " second" << endl;
     
     // compute eigenvalues and eigenvectors using Eigen
-    Eigen::MatrixXd eigenMatrix(B.rows, B.cols);
-    for (int i = 0; i < B.rows; ++i)
-        for (int j = 0; j < B.cols ; ++j)
-            eigenMatrix(i, j) = B.p[i*A.cols + j];
+    //Eigen::MatrixXd eigenMatrix(B.rows, B.cols);
+    //for (int i = 0; i < B.rows; ++i)
+    //    for (int j = 0; j < B.cols ; ++j)
+    //        eigenMatrix(i, j) = B.p[i*A.cols + j];
 
-    tt = Get_Time();
-    Eigen::EigenSolver<Eigen::MatrixXd> solver(eigenMatrix);
-    //Eigen::VectorXcd eigenvalues = solver.eigenvalues();
-    //Eigen::MatrixXcd eigenvectors = solver.eigenvectors();
-    duration = Get_Time() - tt;
-    cout << "\nEigen: " << duration << " second" << endl;
+    //tt = Get_Time();
+    //Eigen::EigenSolver<Eigen::MatrixXd> solver(eigenMatrix);
+    ////Eigen::VectorXcd eigenvalues = solver.eigenvalues();
+    ////Eigen::MatrixXcd eigenvectors = solver.eigenvectors();
+    //duration = Get_Time() - tt;
+    //cout << "\nEigen: " << duration << " second" << endl;
 
     //printf("\nmy_eigen_recursive: %lf\n", duration);
    // 
