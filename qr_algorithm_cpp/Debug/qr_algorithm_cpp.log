@@ -1,1 +1,13 @@
-﻿  qr_algorithm_cpp.vcxproj -> C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\Debug\qr_algorithm_cpp.exe
+﻿  qr_algorithm_cpp.cpp
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(73,27): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(76,37): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(77,52): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(78,51): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(85,44): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(86,52): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(87,51): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(627,40): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(642,27): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(653,27): warning C4018: '<': signed/unsigned mismatch
+C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\qr_algorithm_cpp.cpp(655,38): warning C4018: '<': signed/unsigned mismatch
+  qr_algorithm_cpp.vcxproj -> C:\Users\User\Documents\semester 10\Programming Languages\QR Alg\qr_algorithm_cpp\Debug\qr_algorithm_cpp.exe
